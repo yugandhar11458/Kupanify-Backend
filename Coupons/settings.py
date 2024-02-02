@@ -62,7 +62,8 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # or the origin of your frontend
-    "http://192.168.1.102:5173"
+    "http://192.168.1.102:5173",
+    "https://kupanify.netlify.app"
 ]
 
 CORS_ALLOW_METHODS = [
