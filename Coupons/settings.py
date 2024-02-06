@@ -113,11 +113,14 @@ WSGI_APPLICATION = 'Coupons.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'django_testing',  # Should match the MYSQL_DATABASE in docker-compose.yml
+        'USER': 'admin',           # Should match the MYSQL_USER in docker-compose.yml
+        'PASSWORD': 'admin',       # Should match the MYSQL_PASSWORD in docker-compose.yml
+        'HOST': 'mysql',           # Should match the service name in docker-compose.yml
+        'PORT': '3306',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
