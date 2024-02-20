@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  backend:
+    image: django-image:latest
+    ports:
+      - "8000:8000"
+    networks:
+      - backend-network
+    environment:
+      - DB_ENGINE=django.db.backends.mysql
+      - DB_NAME=django_testing
+      - DB_USER=admin
+      - DB_PASSWORD=admin
+      - DB_HOST=mysql
+      - DB_PORT=3306
+    restart: always
+ 
+networks:
+  backend-network:
+    name: supra-link
+    external: true
