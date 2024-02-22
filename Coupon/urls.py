@@ -8,7 +8,8 @@ from .views import (
     user_chat_list,
     avail_coupon,
     disavail_coupon,
-    latest_coupons
+    latest_coupons,
+    user_login
 )
 
 urlpatterns = [
@@ -16,9 +17,9 @@ urlpatterns = [
     path('coupons/<int:id>/', coupon_detail, name='coupon-detail'),
     path('coupons/latest/', latest_coupons, name='latest_coupons'),
     path('user-profiles/', user_profile_list, name='user-profile-list'),
-    path('user-profile/<str:userId>/', user_profile_detail, name='user-profile-detail'),
+    path('user-profile/login/<str:email>/<str:password>/', user_login, name='user-login'),
+    path('user-profile/<str:email>/', user_profile_detail, name='user-profile-detail'),    
     path('chat/messages/<str:user_id>/', user_chat_list, name='user_chat_list'),
-    path('chat/messages/<str:user_id>/<str:other_user_id>/', chat_messages, name='chat_messages'),
-    path('coupons/<int:id>/avail/<str:user_id>/', avail_coupon, name='avail-coupon'),  
+    path('chat/messages/<str:user_id>/<str:other_user_id>/', chat_messages, name='chat_messages'),    path('coupons/<int:id>/avail/<str:user_id>/', avail_coupon, name='avail-coupon'),  
     path('coupons/<int:id>/disavail/<str:user_id>/', disavail_coupon, name='disavail-coupon'),  
 ]

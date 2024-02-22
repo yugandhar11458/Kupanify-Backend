@@ -11,58 +11,53 @@ from datetime import date
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import make_password
 
 # User views
 @api_view(['GET', 'POST'])
 def user_profile_list(request):
-    """
-    GET: Retrieve a list of user profiles.
-    POST: Create or update a user profile.
-    """
     if request.method == 'GET':
         # Retrieve all user profiles
         user_profiles = UserProfile.objects.all()
+        # Serialize user profiles without chat_messages
         serializer = UserProfileSerializer(user_profiles, many=True)
-        # Format and return the response data
-        response_data = [{'userId': str(profile['userId']),
+        # Exclude chat_messages when responding
+        response_data = [{'userId': profile['userId'],
                           'userName': profile['userName'],
                           'userImage': profile['userImage']} for profile in serializer.data]
         return Response(response_data)
 
     elif request.method == 'POST':
-        # Check if the user profile already exists
-        existing_profile = UserProfile.objects.filter(userId=request.data.get('userId')).first()
+        email = request.data.get('email')
 
-        if existing_profile:
-            serializer = UserProfileSerializer(existing_profile, data=request.data)
-        else:
-            serializer = UserProfileSerializer(data=request.data)
+        if UserProfile.objects.filter(email=email).exists():
+            return Response({'detail': 'User with this email already exists'+email}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Hash the password before saving the user profile
+        request.data['password'] = make_password(request.data['password'])
+
+        serializer = UserProfileSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
-            return Response({'detail': 'User is added/updated successfully'}, status=status.HTTP_201_CREATED)
+            return Response({'detail': 'User is added successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
-def user_profile_detail(request, userId):
-    """
-    GET: Retrieve a user profile.
-    PUT/PATCH: Update a user profile.
-    DELETE: Delete a user profile.
-    """
-    user_profile = get_object_or_404(UserProfile, userId=userId)
+def user_profile_detail(request, email):
+    # Check if a user profile with the provided email exists
+    user_profile = get_object_or_404(UserProfile, email=email)
 
-    # Delete expired coupons before processing the request
-    delete_expired_coupons()
-
+    # Handle GET request for retrieving user profile details
     if request.method == 'GET':
         serializer = UserProfileSerializer(user_profile)
-        response_data = {'userId': str(serializer.data['userId']),
-                         'userName': serializer.data['userName'],
-                         'availedCoupons': serializer.data['availedCoupons'],
-                         'uploadedCoupons': serializer.data['uploadedCoupons'],
-                         'userImage': serializer.data['userImage']}
-        return Response(response_data)
+        return Response(serializer.data)
+
+    # Handle PUT and PATCH requests for updating user profile
     elif request.method in ['PUT', 'PATCH']:
         serializer = UserProfileSerializer(user_profile, data=request.data)
         if serializer.is_valid():
@@ -70,9 +65,25 @@ def user_profile_detail(request, userId):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # Handle DELETE request for deleting user profile
     elif request.method == 'DELETE':
         user_profile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+def user_login(request, email, password):
+    # Check if a user profile with the provided email exists
+    user_profile = get_object_or_404(UserProfile, email=email)
+
+    # Check if the provided password matches the user's password
+    if not check_password(password, user_profile.password):
+        return Response({"error": "Incorrect email or password."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # Handle GET request for retrieving user profile details
+    if request.method == 'GET':
+        serializer = UserProfileSerializer(user_profile)
+        return Response(serializer.data)
+
 
 # Function to delete expired coupons
 def delete_expired_coupons():
@@ -167,25 +178,31 @@ def coupon_detail(request, id):
     elif request.method == 'DELETE':
         coupon.delete()
         return Response(status=204)
-
+    
+    
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def latest_coupons(request):
     """
     GET: Retrieve the latest coupons.
     """
-    limit = int(request.GET.get('limit', 20))  # Default to 20 if limit is not provided
-    userId = request.GET.get('userId', None)  # Get the user ID from the request
-
     try:
-        # Get the latest coupons that are not availed and exclude those uploaded by the current user
+        limit = int(request.GET.get('limit', 20))  # Default to 20 if limit is not provided
+        userId = request.GET.get('userId', None)  # Get the user ID from the request
+
+        # Get the latest coupons that are not availed and exclude those uploaded by the current user if userId is provided
         coupons = Coupon.objects.filter(~Q(userId=userId) if userId else Q(), isAvailed=False).order_by('-id')[:limit]
 
         serializer = CouponSerializer(coupons, many=True)
+
+        if not coupons:  # Check if no coupons are found
+            return Response({'detail': 'No coupons found for the specified user.'}, status=status.HTTP_200_OK)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
         print("Error fetching coupons:", str(e))
-        return Response({'detail': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'detail': 'An error occurred while fetching coupons.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
 def avail_coupon(request, id, user_id):
@@ -247,18 +264,13 @@ def user_chat_list(request, user_id, other_user_id=None):
         # Exclude the current user's profile
         user_profiles = user_profiles.exclude(userId=user_id)
 
-        # Serialize only the required fields
-        serialized_data = []
-        for user_profile in user_profiles:
-            user_data = {
-                'userId': user_profile.userId,
-                'userName': user_profile.userName,
-                'userImage': user_profile.userImage if user_profile.userImage else None,
-            }
-
-            serialized_data.append(user_data)
-
-        return Response(serialized_data)
+        # Serialize user profiles
+        serializer = UserProfileSerializer(user_profiles, many=True)
+        # Exclude chat_messages when responding
+        response_data = [{'userId': profile['userId'],
+                          'userName': profile['userName'],
+                          'userImage': profile['userImage']} for profile in serializer.data]
+        return Response(response_data)
 
     elif request.method == 'POST':
         sender_profile = get_object_or_404(UserProfile, userId=user_id)

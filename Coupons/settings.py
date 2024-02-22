@@ -62,6 +62,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # or the origin of your frontend
+    "http://localhost:8080",
     "http://192.168.1.102:5173",
     "https://kupanify.netlify.app"
 ]
@@ -111,14 +112,22 @@ WSGI_APPLICATION = 'Coupons.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'django_testing',  # Should match the MYSQL_DATABASE in docker-compose.yml
+#         'USER': 'admin',           # Should match the MYSQL_USER in docker-compose.yml
+#         'PASSWORD': 'admin',       # Should match the MYSQL_PASSWORD in docker-compose.yml
+#         'HOST': 'mysql',           # Should match the service name in docker-compose.yml
+#         'PORT': '3306',
+#     }
+# }
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'django_testing',  # Should match the MYSQL_DATABASE in docker-compose.yml
-        'USER': 'admin',           # Should match the MYSQL_USER in docker-compose.yml
-        'PASSWORD': 'admin',       # Should match the MYSQL_PASSWORD in docker-compose.yml
-        'HOST': 'mysql',           # Should match the service name in docker-compose.yml
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
