@@ -20,6 +20,7 @@ urlpatterns = [
     path('user-profile/login/<str:email>/<str:password>/', user_login, name='user-login'),
     path('user-profile/<str:email>/', user_profile_detail, name='user-profile-detail'),    
     path('chat/messages/<str:user_id>/', user_chat_list, name='user_chat_list'),
-    path('chat/messages/<str:user_id>/<str:other_user_id>/', chat_messages, name='chat_messages'),    path('coupons/<int:id>/avail/<str:user_id>/', avail_coupon, name='avail-coupon'),  
+    path('chat/messages/<str:user_id>/<str:other_user_id>/', chat_messages, name='chat_messages'),
+    path('coupons/<int:id>/avail/<str:user_id>/', avail_coupon, name='avail-coupon'),  
     path('coupons/<int:id>/disavail/<str:user_id>/', disavail_coupon, name='disavail-coupon'),  
 ]
