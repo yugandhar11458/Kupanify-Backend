@@ -10,11 +10,13 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 
 class CouponSerializer(serializers.ModelSerializer):
-    screenshots = serializers.ImageField(required=False)  # Update to handle image uploads
+    screenshots = serializers.ImageField(required=False, allow_null=True)  # Update to make screenshots field not required
+    couponCode = serializers.CharField(required=False, allow_blank=True)  # Update to make couponCode field not required
 
     class Meta:
         model = Coupon
         fields = '__all__'
+
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
