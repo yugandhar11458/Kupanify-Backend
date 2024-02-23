@@ -70,10 +70,15 @@ def user_profile_detail(request, email):
         user_profile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+from django.http import Http404
+
 @api_view(['GET'])
 def user_login(request, email, password):
-    # Check if a user profile with the provided email exists
-    user_profile = get_object_or_404(UserProfile, email=email)
+    try:
+        # Check if a user profile with the provided email exists
+        user_profile = UserProfile.objects.get(email=email)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
     # Check if the provided password matches the user's password
     if not check_password(password, user_profile.password):
@@ -83,6 +88,7 @@ def user_login(request, email, password):
     if request.method == 'GET':
         serializer = UserProfileSerializer(user_profile)
         return Response(serializer.data)
+
 
 
 # Function to delete expired coupons
