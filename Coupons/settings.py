@@ -65,7 +65,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://192.168.1.102:5173",
     "https://kupanify.netlify.app",
-    "http://13.201.4.234:4000"
+    "http://13.201.4.234:4000",
+    "http://65.1.148.156:4000"
 ]
 
 CORS_ALLOW_METHODS = [
